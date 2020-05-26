@@ -68,15 +68,15 @@ if [ -z $pool ]; then
 fi
 #########################################################################
 # Verify threshold sense
-if [ -n $warn ] && [ -z $crit ]; then
+if [ -n "${warn}" -a -z "${crit}" ]; then
   echo "Both warning and critical thresholds must be set"
   exit $STATE_UNKNOWN
 fi
-if [ -z $warn ] && [ -n $crit ]; then
+if [ -z "${warn}" -a -n "${crit}" ]; then
   echo "Both warning and critical thresholds must be set"
   exit $STATE_UNKNOWN
 fi
-if [ $warn -gt $crit ]; then
+if [ -n "${warn}" -a ${warn} -gt ${crit} ]; then
   echo "Warning threshold cannot be greater than critical"
   exit $STATE_UNKNOWN
 fi
@@ -100,7 +100,7 @@ for POOL in ${POOLS}; do
   CAPACITY=$(zpool list -Ho capacity $POOL | awk -F"%" '{print $1}')
   HEALTH=$(zpool list -Ho health $POOL)
   # Check with thresholds
-  if [ -n $warn ] && [ -n $crit ]; then
+  if [ -n "${warn}" -a -n "${crit}" ]; then
     if [ $CAPACITY -ge $crit ]; then
       error="${error} POOL $POOL usage is CRITICAL (${CAPACITY}%)"
       fcrit=1
