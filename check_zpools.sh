@@ -35,11 +35,10 @@ Example: $0 -p ALL -w 80 -c 90"
 # Check necessary commands are available
 for cmd in zpool awk [
 do
- if ! `which ${cmd} 1>/dev/null`
- then
- echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
- exit ${STATE_UNKNOWN}
- fi
+  if ! `which ${cmd} 1>/dev/null`; then
+    echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
+    exit ${STATE_UNKNOWN}
+  fi
 done
 #########################################################################
 # Check for people who need help - arent we all nice ;-)
@@ -63,12 +62,24 @@ do
 done
 #########################################################################
 # Did user obey to usage?
-if [ -z $pool ]; then echo -e $help; exit ${STATE_UNKNOWN}; fi
+if [ -z $pool ]; then
+  echo -e $help
+  exit ${STATE_UNKNOWN}
+fi
 #########################################################################
 # Verify threshold sense
-if [ -n $warn ] && [ -z $crit ]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
-if [ -z $warn ] && [ -n $crit ]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
-if [ $warn -gt $crit ]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
+if [ -n $warn ] && [ -z $crit ]; then
+  echo "Both warning and critical thresholds must be set"
+  exit $STATE_UNKNOWN
+fi
+if [ -z $warn ] && [ -n $crit ]; then
+  echo "Both warning and critical thresholds must be set"
+  exit $STATE_UNKNOWN
+fi
+if [ $warn -gt $crit ]; then
+  echo "Warning threshold cannot be greater than critical"
+  exit $STATE_UNKNOWN
+fi
 #########################################################################
 # What needs to be checked?
 ## Check all pools
@@ -89,8 +100,7 @@ for POOL in ${POOLS}; do
   CAPACITY=$(zpool list -Ho capacity $POOL | awk -F"%" '{print $1}')
   HEALTH=$(zpool list -Ho health $POOL)
   # Check with thresholds
-  if [ -n $warn ] && [ -n $crit ]
-  then
+  if [ -n $warn ] && [ -n $crit ]; then
     if [ $CAPACITY -ge $crit ]; then
       error="${error} POOL $POOL usage is CRITICAL (${CAPACITY}%)"
       fcrit=1
