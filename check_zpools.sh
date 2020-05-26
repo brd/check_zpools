@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #########################################################################
 # Script:       check_zpools.sh
 # Purpose:      Nagios plugin to monitor status of zfs pool
@@ -42,7 +42,7 @@ do
  fi
 done
 #########################################################################
-# Check for people who need help - aren't we all nice ;-)
+# Check for people who need help - arent we all nice ;-)
 if [ "${1}" = "--help" -o "${#}" = "0" ];
        then
        echo -e "${help}";
@@ -66,26 +66,26 @@ done
 if [ -z $pool ]; then echo -e $help; exit ${STATE_UNKNOWN}; fi
 #########################################################################
 # Verify threshold sense
-if [[ -n $warn ]] && [[ -z $crit ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
-if [[ -z $warn ]] && [[ -n $crit ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
-if [[ $warn -gt $crit ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
+if [ -n $warn ] && [ -z $crit ]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
+if [ -z $warn ] && [ -n $crit ]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
+if [ $warn -gt $crit ]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 #########################################################################
 # What needs to be checked?
 ## Check all pools
 if [ $pool = "ALL" ]
 then
-  POOLS=($(zpool list -Ho name))
+  POOLS=$(zpool list -Ho name)
   p=0
-  for POOL in ${POOLS[*]}
+  for POOL in ${POOLS}
   do 
     CAPACITY=$(zpool list -Ho capacity $POOL | awk -F"%" '{print $1}')
     HEALTH=$(zpool list -Ho health $POOL)
     # Check with thresholds
-    if [[ -n $warn ]] && [[ -n $crit ]]
+    if [ -n $warn ] && [ -n $crit ]
     then
-      if [[ $CAPACITY -ge $crit ]]
+      if [ $CAPACITY -ge $crit ]
       then error[${p}]="POOL $POOL usage is CRITICAL (${CAPACITY}%)"; fcrit=1
-      elif [[ $CAPACITY -ge $warn && $CAPACITY -lt $crit ]]
+      elif [ $CAPACITY -ge $warn -a $CAPACITY -lt $crit ]
       then error[$p]="POOL $POOL usage is WARNING (${CAPACITY}%)"
       elif [ $HEALTH != "ONLINE" ]
       then error[${p}]="$POOL health is $HEALTH"; fcrit=1
@@ -100,9 +100,9 @@ then
     let p++
   done
 
-  if [[ ${#error[*]} -gt 0 ]]
+  if [ ${#error[*]} -gt 0 ]
   then 
-    if [[ $fcrit -eq 1 ]]; then exit_code=2; else exit_code=1; fi
+    if [ $fcrit -eq 1 ]; then exit_code=2; else exit_code=1; fi
     echo "ZFS POOL ALARM: ${error[*]}|${perfdata[*]}"; exit ${exit_code}
   else echo "ALL ZFS POOLS OK (${POOLS[*]})|${perfdata[*]}"; exit 0
   fi
@@ -112,12 +112,12 @@ else
   CAPACITY=$(zpool list -Ho capacity $pool | awk -F"%" '{print $1}')
   HEALTH=$(zpool list -Ho health $pool)
 
-  if [[ -n $warn ]] && [[ -n $crit ]]
+  if [ -n $warn ] && [ -n $crit ]
   then 
     # Check with thresholds
     if [ $HEALTH != "ONLINE" ]; then echo "ZFS POOL $pool health is $HEALTH|$pool=${CAPACITY}%"; exit ${STATE_CRITICAL}
-    elif [[ $CAPACITY -gt $crit ]]; then echo "ZFS POOL $pool usage is CRITICAL (${CAPACITY}%|$pool=${CAPACITY}%)"; exit ${STATE_CRITICAL}
-    elif [[ $CAPACITY -gt $warn && $CAPACITY -lt $crit ]]; then echo "ZFS POOL $pool usage is WARNING (${CAPACITY}%)|$pool=${CAPACITY}%"; exit ${STATE_WARNING}
+    elif [ $CAPACITY -gt $crit ]; then echo "ZFS POOL $pool usage is CRITICAL (${CAPACITY}%|$pool=${CAPACITY}%)"; exit ${STATE_CRITICAL}
+    elif [ $CAPACITY -gt $warn -a $CAPACITY -lt $crit ]; then echo "ZFS POOL $pool usage is WARNING (${CAPACITY}%)|$pool=${CAPACITY}%"; exit ${STATE_WARNING}
     else echo "ALL ZFS POOLS OK ($pool)|$pool=${CAPACITY}%"; exit ${STATE_OK}
     fi
   else
