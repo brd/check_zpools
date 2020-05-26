@@ -73,40 +73,54 @@ if [ $warn -gt $crit ]; then echo "Warning threshold cannot be greater than crit
 # What needs to be checked?
 ## Check all pools
 if [ $pool = "ALL" ]; then
-  POOLS=$(zpool list -Ho name)
+  for i in $(zpool list -Ho name); do
+    POOLS="${i} ${POOLS}"
+  done
 else
   POOLS=${pool}
 fi
 
-for POOL in ${POOLS}
-do 
+error=
+perfdata=
+fcrit=0
+
+
+for POOL in ${POOLS}; do
   CAPACITY=$(zpool list -Ho capacity $POOL | awk -F"%" '{print $1}')
   HEALTH=$(zpool list -Ho health $POOL)
   # Check with thresholds
   if [ -n $warn ] && [ -n $crit ]
   then
-    if [ $CAPACITY -ge $crit ]
-    then error[${p}]="POOL $POOL usage is CRITICAL (${CAPACITY}%)"; fcrit=1
-    elif [ $CAPACITY -ge $warn -a $CAPACITY -lt $crit ]
-    then error[$p]="POOL $POOL usage is WARNING (${CAPACITY}%)"
-    elif [ $HEALTH != "ONLINE" ]
-    then error[${p}]="$POOL health is $HEALTH"; fcrit=1
+    if [ $CAPACITY -ge $crit ]; then
+      error="${error} POOL $POOL usage is CRITICAL (${CAPACITY}%)"
+      fcrit=1
+    elif [ $CAPACITY -ge $warn -a $CAPACITY -lt $crit ]; then
+      error="${error} POOL $POOL usage is WARNING (${CAPACITY}%)"
+    elif [ $HEALTH != "ONLINE" ]; then
+      error="${error} $POOL health is $HEALTH"
+      fcrit=1
     fi
   # Check without thresholds
-  else 
-    if [ $HEALTH != "ONLINE" ]
-    then error[${p}]="$POOL health is $HEALTH"; fcrit=1
+  else
+    if [ $HEALTH != "ONLINE" ]; then
+      error="${error} $POOL health is $HEALTH"
+      fcrit=1
     fi
   fi
-  perfdata[$p]="$POOL=${CAPACITY}% "
-  let p++
+  perfdata="${perfdata} $POOL=${CAPACITY}% "
 done
 
-if [ ${#error[*]} -gt 0 ]
-then 
-  if [ $fcrit -eq 1 ]; then exit_code=2; else exit_code=1; fi
-  echo "ZFS POOL ALARM: ${error[*]}|${perfdata[*]}"; exit ${exit_code}
-else echo "ALL ZFS POOLS OK (${POOLS[*]})|${perfdata[*]}"; exit 0
+if [ -n "${error}" ]; then
+  if [ $fcrit -eq 1 ]; then
+    exit_code=2
+  else
+    exit_code=1
+  fi
+  echo "ZFS POOL ALARM: ${error}|${perfdata}"
+  exit ${exit_code}
+else
+  echo "ALL ZFS POOLS OK (${POOLS})|${perfdata}"
+  exit 0
 fi
 
 echo "UKNOWN - Should never reach this part"
