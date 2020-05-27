@@ -33,15 +33,14 @@ Usage: $0 -p (poolname|ALL) [-w warnpercent] [-c critpercent]\n
 Example: $0 -p ALL -w 80 -c 90"
 #########################################################################
 # Check necessary commands are available
-for cmd in zpool awk [
-do
+for cmd in zpool awk "["; do
   if ! `which ${cmd} 1>/dev/null`; then
     echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
     exit ${STATE_UNKNOWN}
   fi
 done
 #########################################################################
-# Check for people who need help - arent we all nice ;-)
+# Check for people who need help - aren't we all nice ;-)
 if [ "${1}" = "--help" -o "${#}" = "0" ];
        then
        echo -e "${help}";
